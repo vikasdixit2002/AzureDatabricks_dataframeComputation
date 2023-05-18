@@ -1,8 +1,12 @@
 # Databricks notebook source
+import pyspark.sql.functions as sf
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC create database if not exists golddb;
-# MAGIC 
-# MAGIC create table golddb.sales;
+# MAGIC
+# MAGIC create table if not exists golddb.sales;
 
 # COMMAND ----------
 
@@ -19,32 +23,56 @@ spark.read.format("parquet")\
                .mode("append")\
                .saveAsTable("golddb.sales")
 
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC select * from golddb.sales limit 10
+
+# COMMAND ----------
+
+# MAGIC %python 
+# MAGIC tablename = 'golddb.sales'
+# MAGIC spark.conf.set('tbl.tablename',tablename)
 
 # COMMAND ----------
 
 # MAGIC %sql 
-# MAGIC select count(1) from golddb.sales 
+# MAGIC
+# MAGIC set name= ${tbl.tablename}
+
+# COMMAND ----------
+
+# MAGIC %md Changing data type
+
+# COMMAND ----------
+
+
+df = spark.read.format("parquet")\
+               .option("inferschema",True)\
+               .load("dbfs:/databricks-datasets/amazon/test4K/*.*").withColumn("rating",sf.col("rating").cast("int"))
+df.write.format("delta").option("overwriteschema",True).mode("overwrite").saveAsTable("golddb.sales")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
+# MAGIC select count(*) from golddb.sales
 
 # COMMAND ----------
 
 # MAGIC %sql 
-# MAGIC describe table extended golddb.sales 
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC insert into golddb.sales 
-# MAGIC select brand,'','','',array(1, 2, 3),'','','','','' from parquet.`dbfs:/databricks-datasets/amazon/test4K/*.*`
-
-# COMMAND ----------
-
-.write.format("Delta").saveAsTabledf = spark.read.format("csv").option("inferschema",True).option("header",True).load("dbfs:/databricks-datasets/amazon/users/part-r-00000-f8d9888b-ba9e-47bb-9501-a877f2574b3c.csv").write.format("Delta").saveAsTable
-display(df)
-
-# COMMAND ----------
-
-dbfs:/databricks-datasets/amazon/users/part-r-00000-f8d9888b-ba9e-47bb-9501-a877f2574b3c.csv%sql 
-select * from csv.`dbfs:/databricks-datasets/amazon/users/part-r-00000-f8d9888b-ba9e-47bb-9501-a877f2574b3c.csv` header= True
+# MAGIC
+# MAGIC select asin
+# MAGIC ,brand
+# MAGIC ,helpful
+# MAGIC ,img
+# MAGIC ,price
+# MAGIC ,rating
+# MAGIC ,review
+# MAGIC ,time
+# MAGIC ,title
+# MAGIC user
+# MAGIC   from parquet.`/databricks-datasets/amazon/test4K/*.*`
 
 # COMMAND ----------
 
